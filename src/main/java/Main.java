@@ -49,10 +49,10 @@ public class Main {
             while (!requestHeader.startsWith("User-Agent")) {
                 requestHeader = reader.readLine();
             }
+            response.append("HTTP/1.1 200 OK\r\n");
             responseBody.append(requestHeader.substring(12));
             responseHeader.append("Content-Type: text/plain\r\n");
             responseHeader.append("Content-Length: ").append(responseBody.length()).append("\r\n");
-            System.out.println(requestHeader);
         }
         else {
             response.append("HTTP/1.1 404 Not Found\r\n");
