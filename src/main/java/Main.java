@@ -24,29 +24,39 @@ public class Main {
     }
 
     private static String buildResponse(Socket clientSocket) throws IOException {
-        StringBuilder header = new StringBuilder();
-        String responseBody = "";
+        StringBuilder response = new StringBuilder();
+        StringBuilder responseHeader = new StringBuilder();
+        StringBuilder responseBody = new StringBuilder();
+
         InputStream input = clientSocket.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-        String request = reader.readLine();
-        System.out.println("\nHTTP request received: \n" + request);
-        String urlPath = request.split(" ")[1];
 
-        StringBuilder response = new StringBuilder();
+        String requestStatus = reader.readLine();
+        String requestHeader = reader.readLine();
+        String urlPath = requestStatus.split(" ")[1];
+        System.out.println("\nHTTP request received: \n" + requestStatus);
+
 
         if (urlPath.equals("/")) {
             // add status to response
             response.append("HTTP/1.1 200 OK\r\n");
-        } else if (urlPath.matches(".*(/echo).*")) {
+        } else if (urlPath.startsWith("/echo")) {
             response.append("HTTP/1.1 200 OK\r\n");
-            responseBody = urlPath.split("/")[2];
-            header.append("Content-Type: text/plain\r\n");
-            header.append("Content-Length: ").append(responseBody.length()).append("\r\n");
-        } else {
+            responseBody.append(urlPath.split("/")[2]);
+            responseHeader.append("Content-Type: text/plain\r\n");
+            responseHeader.append("Content-Length: ").append(responseBody.length()).append("\r\n");
+        } else if (urlPath.startsWith("/user-agent")) {
+            while (!requestHeader.startsWith("User-Agent")) {
+                requestHeader = reader.readLine();
+            }
+            responseBody.append(requestHeader.substring(12));
+            System.out.println(requestHeader);
+        }
+        else {
             response.append("HTTP/1.1 404 Not Found\r\n");
         }
         // add header to response
-        response.append(header).append("\r\n");
+        response.append(responseHeader).append("\r\n");
         // add body to response
         response.append(responseBody).append("\r\n");
         return response.toString();
