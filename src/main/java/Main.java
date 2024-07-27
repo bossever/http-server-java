@@ -39,7 +39,7 @@ public class Main {
             response.append("HTTP/1.1 200 OK\r\n");
         } else if (urlPath.matches(".*(/echo).*")) {
             response.append("HTTP/1.1 200 OK\r\n");
-            responseBody = urlPath.split("/")[1];
+            responseBody = urlPath.split("/")[2];
             header.append("Content-Type: text/plain\r\n");
             header.append("Content-Length: ").append(responseBody.length()).append("\r\n");
         } else {
