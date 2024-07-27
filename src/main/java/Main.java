@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
     public static void main(String[] args) {
@@ -12,10 +13,9 @@ public class Main {
 
             Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
             System.out.println("Accepted new connection");
-            PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
+            clientSocket.getOutputStream().write("HTTP/1.1 200 OK\\r\\n\\r\\n".getBytes(StandardCharsets.UTF_8));
 
             // responding with HTTP status 200
-            writer.print("HTTP/1.1 200 OK\\r\\n\\r\\n\n");
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
