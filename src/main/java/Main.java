@@ -50,6 +50,8 @@ public class Main {
                 requestHeader = reader.readLine();
             }
             responseBody.append(requestHeader.substring(12));
+            responseHeader.append("Content-Type: text/plain\r\n");
+            responseHeader.append("Content-Length: ").append(responseBody.length()).append("\r\n");
             System.out.println(requestHeader);
         }
         else {
