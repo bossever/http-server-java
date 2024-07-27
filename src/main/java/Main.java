@@ -13,7 +13,7 @@ public class Main {
 
             Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
             System.out.println("Accepted new connection");
-            clientSocket.getOutputStream().write("HTTP/1.1 200 OK\\r\\n\\r\\n".getBytes(StandardCharsets.UTF_8));
+            clientSocket.getOutputStream().write("HTTP/1.1 200 OK\\r\\n\\r\\n".getBytes());
 
             // responding with HTTP status 200
         } catch (IOException e) {
