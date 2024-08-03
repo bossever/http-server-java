@@ -19,7 +19,7 @@ public class Client implements Runnable {
   
   private final int id;
   private final Socket socket;
-  private final String uploadDirectory;
+  private final String WORKING_DIRECTORY;
 
   public static final String HTTP_1_1 = "HTTP/1.1";
   public static final Pattern ECHO_PATTERN = Pattern.compile("/echo/(.*)");
@@ -31,10 +31,10 @@ public class Client implements Runnable {
   private static final byte SPACE_BYTE = ' ';
   private static final byte[] COLON_SPACE_BYTE = { ':', ' ' };
 
-  public Client(Socket socket, String uploadDirectory) throws Exception {
+  public Client(Socket socket, String WORKING_DIRECTORY) throws Exception {
     this.id = ID.incrementAndGet();
     this.socket = socket;
-    this.uploadDirectory = uploadDirectory;
+    this.WORKING_DIRECTORY = WORKING_DIRECTORY;
   }
 
   @Override
@@ -143,7 +143,7 @@ public class Client implements Runnable {
     match = FILES_PATTERN.matcher(request.path());
     if (match.find()) {
       final String filename = match.group(1);
-      return Response.file(new File(request.path(), filename));
+      return Response.file(new File(WORKING_DIRECTORY, filename));
     }
 
     return Response.status(Status.NOT_FOUND);

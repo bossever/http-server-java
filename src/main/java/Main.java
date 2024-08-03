@@ -9,12 +9,12 @@ public class Main {
 
     private static final int PORT = 4221;
     private static final String DIRECTORY_ARG = "--directory";
-    private static String directory = ".";
+    private static String WORKING_DIRECTORY = ".";
 
     public static void main(String[] args) {
         if (args.length > 1 && args[0].equals(DIRECTORY_ARG)) {
-            directory = args[1];
-            System.out.printf("File upload directory set to %s%n", directory);
+            WORKING_DIRECTORY = args[1];
+            System.out.printf("File upload directory set to %s%n", WORKING_DIRECTORY);
         }
 
         try (
@@ -26,7 +26,7 @@ public class Main {
 
             while (true) {
                 final Socket socket = serverSocket.accept();
-                final Client client = new Client(socket, directory);
+                final Client client = new Client(socket, WORKING_DIRECTORY);
                 executorService.submit(client);
             }
         } catch (Exception e) {
