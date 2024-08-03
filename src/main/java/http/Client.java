@@ -2,6 +2,7 @@ package http;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -18,9 +19,11 @@ public class Client implements Runnable {
   
   private final int id;
   private final Socket socket;
+  private final String uploadDirectory;
 
   public static final String HTTP_1_1 = "HTTP/1.1";
   public static final Pattern ECHO_PATTERN = Pattern.compile("/echo/(.*)");
+  public static final Pattern FILES_PATTERN = Pattern.compile("/files/(.*)");
   public static final String CRLF = "\r\n";
 
   private static final byte[] HTTP_1_1_BYTES = HTTP_1_1.getBytes();
@@ -28,9 +31,10 @@ public class Client implements Runnable {
   private static final byte SPACE_BYTE = ' ';
   private static final byte[] COLON_SPACE_BYTE = { ':', ' ' };
 
-  public Client(Socket socket) throws Exception {
+  public Client(Socket socket, String uploadDirectory) throws Exception {
     this.id = ID.incrementAndGet();
     this.socket = socket;
+    this.uploadDirectory = uploadDirectory;
   }
 
   @Override
@@ -111,7 +115,7 @@ public class Client implements Runnable {
     return request;
   }
 
-  private Response handle(Request request) {
+  private Response handle(Request request) throws IOException {
     Response response = switch (request.method()) {
       case GET -> handleGet(request);
       case POST -> handlePost(request);
@@ -120,7 +124,7 @@ public class Client implements Runnable {
     return response;
   }
 
-  private Response handleGet(Request request) {
+  private Response handleGet(Request request) throws IOException {
     if (request.path().equals("/")) {
       return Response.status(Status.OK);
     }
@@ -130,10 +134,16 @@ public class Client implements Runnable {
       return Response.plainText(userAgent);
     }
 
-    final Matcher match = ECHO_PATTERN.matcher(request.path());
+    Matcher match = ECHO_PATTERN.matcher(request.path());
     if (match.find()) {
       final String message = match.group(1);
       return Response.plainText(message);
+    }
+
+    match = FILES_PATTERN.matcher(request.path());
+    if (match.find()) {
+      final String filename = match.group(1);
+      return Response.file(new File(request.path(), filename));
     }
 
     return Response.status(Status.NOT_FOUND);

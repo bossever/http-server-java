@@ -1,5 +1,7 @@
 package http;
 
+import java.io.*;
+
 public record Response(
     Status status,
     Headers headers,
@@ -19,6 +21,21 @@ public record Response(
         Status.OK,
         (new Headers()).set(Headers.CONTENT_TYPE, "text/plain"),
         bytes);
+  }
+
+  public static Response file(File file) throws IOException {
+    try (InputStream inputStream = new FileInputStream(file)) {
+      byte[] data = inputStream.readAllBytes();
+
+      return new Response(
+              Status.OK,
+              (new Headers().set(Headers.CONTENT_TYPE, "application/octet-stream").set(Headers.CONTENT_LENGTH, String.valueOf(data.length))),
+              data
+      );
+    } catch (FileNotFoundException exception) {
+      System.out.println(exception.getMessage());
+      return status(Status.NOT_FOUND);
+    }
   }
 
   @Override
