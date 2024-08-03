@@ -1,9 +1,6 @@
 package http;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,11 +55,11 @@ public class Client implements Runnable {
   private Request parse(BufferedInputStream inputStream) {
     // GET /user-agent HTTP/1.1\r\n
     // Host: localhost:4221\r\n
-    // User-Agent: foobar/1.2.3\r\n // Read this value
+    // User-Agent: foobar/1.2.3\r\n
     // Accept: */\*\r\n
     // \r\n
     //
-    // Request body (empty)
+    // Request body
     final Scanner scanner = new Scanner(inputStream);
     final Headers headers = new Headers();
     final Method method = Method.valueOf(scanner.next());
@@ -149,9 +146,18 @@ public class Client implements Runnable {
     return Response.status(Status.NOT_FOUND);
   }
 
-  private Response handlePost(Request request) {
-    // TODO replace with actual implementation
-    return Response.status(Status.OK);
+  private Response handlePost(Request request) throws IOException {
+    Matcher match = FILES_PATTERN.matcher(request.path());
+    if (match.find()) {
+      final String filename = match.group(1);
+
+      try (OutputStream outputStream = new FileOutputStream(new File(WORKING_DIRECTORY, filename))
+      ) {
+        outputStream.write(request.body());
+        return Response.status(Status.CREATED);
+      }
+    }
+    return Response.status(Status.NOT_FOUND);
   }
 
   private void send(Response response, BufferedOutputStream outputStream) throws IOException {
