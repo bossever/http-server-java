@@ -1,5 +1,7 @@
 package http;
 
+import http.encoding.Encoding;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
@@ -205,7 +207,7 @@ public class Client implements Runnable {
     outputStream.flush();
   }
 
-  private Response middleware(Request request, Response response) {
+  private Response middleware(Request request, Response response) throws IOException {
     List<String> encodings = request.headers().getEncodingsStack();
 
     while (!encodings.isEmpty()) {
@@ -213,9 +215,10 @@ public class Client implements Runnable {
 
       if ((Headers.SUPPORTED_ENCODINGS).contains(encoding)) {
         // encode
+        byte[] encodedBody = Encoding.encode(encoding, response.body());
         Headers newHeaders = new Headers(response.headers());
         newHeaders.set(Headers.CONTENT_ENCODING, encoding);
-        return new Response(response.status(), newHeaders, response.body());
+        return new Response(response.status(), newHeaders, encodedBody);
       }
       else {
         encodings.removeFirst();
