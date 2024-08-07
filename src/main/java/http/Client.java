@@ -2,11 +2,9 @@ package http;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,8 +42,10 @@ public class Client implements Runnable {
 
       final Request request = parse(bufferedInputStream);
       final Response response = handle(request);
+      final Response compressedResponse = middleware(request, response);
 
-      send(response, bufferedOutputStream);
+      System.out.println(compressedResponse);
+      send(compressedResponse, bufferedOutputStream);
     } catch (IOException e) {
       System.out.printf("Connection %d returned an error %s%n", id, e.getMessage());
       e.printStackTrace();
@@ -85,7 +85,7 @@ public class Client implements Runnable {
       if (header.length < 2) {
         throw new IllegalStateException("Header is missing value: %s".formatted(line));
       } else if (header.length == 2) {
-        headers.set(header[0], header[1].strip());
+          headers.set(header[0], header[1].strip());
       } else {
         headers.set(header[0], String.join(":", Arrays.copyOfRange(header, 1, header.length)).strip());
       }
@@ -116,7 +116,6 @@ public class Client implements Runnable {
       case GET -> handleGet(request);
       case POST -> handlePost(request);
     };
-    System.out.println(response);
     return response;
   }
 
@@ -204,5 +203,24 @@ public class Client implements Runnable {
     }
 
     outputStream.flush();
+  }
+
+  private Response middleware(Request request, Response response) {
+    List<String> encodings = request.headers().getEncodingsStack();
+
+    while (!encodings.isEmpty()) {
+      String encoding = encodings.getFirst().toLowerCase();
+
+      if ((Headers.SUPPORTED_ENCODINGS).contains(encoding)) {
+        // encode
+        Headers newHeaders = new Headers(response.headers());
+        newHeaders.set(Headers.CONTENT_ENCODING, encoding);
+        return new Response(response.status(), newHeaders, response.body());
+      }
+      else {
+        encodings.removeFirst();
+      }
+    }
+    return response;
   }
 }
