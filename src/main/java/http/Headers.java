@@ -27,7 +27,7 @@ public class Headers {
   }
 
   public List<String> getEncodingsStack() {
-    return (Arrays.stream(storage.getOrDefault(ACCEPT_ENCODING, "").split(",\\s+")).toList());
+    return new ArrayList<String>(Arrays.stream(storage.getOrDefault(ACCEPT_ENCODING, "").split(",\\s+")).toList());
   }
 
   public int getContentLength() {
