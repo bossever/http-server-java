@@ -1,5 +1,7 @@
 package http;
 
+import java.util.Arrays;
+
 public record Request(
         Method method,
         String path,
@@ -11,7 +13,7 @@ public record Request(
         String formatted;
 
         if (body != null) {
-            formatted = "%n%s %s%n%n%s%n%s%n".formatted(method.toString(), path, headers.toString(), body);
+            formatted = "%n%s %s%n%n%s%n%s%n".formatted(method.toString(), path, headers.toString(), Arrays.toString(body));
         } else {
             formatted = "%n%s %s%n%n%s%n".formatted(method.toString(), path, headers.toString());
         }

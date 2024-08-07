@@ -52,7 +52,7 @@ public class Client implements Runnable {
     }
   }
 
-  private Request parse(BufferedInputStream inputStream) {
+  private Request parse(BufferedInputStream inputStream) throws IOException {
     // GET /user-agent HTTP/1.1\r\n
     // Host: localhost:4221\r\n
     // User-Agent: foobar/1.2.3\r\n
@@ -60,54 +60,53 @@ public class Client implements Runnable {
     // \r\n
     //
     // Request body
-    final Scanner scanner = new Scanner(inputStream);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
     final Headers headers = new Headers();
-    final Method method = Method.valueOf(scanner.next());
-    final String path = scanner.next();
+    final String[] requestLine = reader.readLine().split(" ");
+    final Method method = Method.valueOf(requestLine[0]);
+    final String path = requestLine[1];
+    final String version = requestLine[2];
+    final Request request;
 
     if (!path.startsWith("/")) {
       throw new IllegalStateException("Path does not start with forward-slash: %s".formatted(path));
     }
-    String version = scanner.next();
 
     if (!HTTP_1_1.equals(version)) {
       throw new IllegalStateException("Unsupported HTTP version: %s".formatted(version));
     }
 
-    List<Byte> bodyBytesList = new ArrayList<>();
     String line;
-    line = scanner.nextLine();
+    reader.readLine(); // Skip the empty line after the request line
 
-    while (!(line = scanner.nextLine()).isEmpty()) {
+    while (!(line = reader.readLine()).isEmpty()) {
       String[] header = line.split(":");
 
       if (header.length < 2) {
         throw new IllegalStateException("Header is missing value: %s".formatted(line));
-      }
-      else if (header.length == 2) {
+      } else if (header.length == 2) {
         headers.set(header[0], header[1].strip());
-      }
-      else {
+      } else {
         headers.set(header[0], String.join(":", Arrays.copyOfRange(header, 1, header.length)).strip());
       }
     }
-    final Request request;
 
     if (method.equals(Method.POST)) {
-      while (scanner.hasNextByte()) {
-        bodyBytesList.add(scanner.nextByte());
-      }
-      byte[] body = new byte[bodyBytesList.size()];
+      final int contentLength = headers.getContentLength();
+      final byte[] body = new byte[contentLength];
 
-      for (int i = 0; i < bodyBytesList.size(); i++) {
-        body[i] = bodyBytesList.get(i);
+      for (int i = 0; i < contentLength; i++) {
+        int byteRead = reader.read();
+        if (byteRead == -1) {
+          throw new IOException("Unexpected end of stream");
+        }
+        body[i] = (byte) byteRead;
       }
-      scanner.close();
       request = new Request(method, path, headers, body);
-
     } else {
       request = new Request(method, path, headers, null);
     }
+
     System.out.printf(request.toString());
     return request;
   }
